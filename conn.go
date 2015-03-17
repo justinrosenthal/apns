@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"strings"
+	"time"
 )
 
 const (
@@ -64,6 +65,8 @@ func (c *Conn) Connect() error {
 	if err != nil {
 		return err
 	}
+	conn.(*net.TCPConn).SetKeepAlive(true)
+	conn.(*net.TCPConn).SetKeepAlivePeriod(30 * time.Second)
 
 	tlsConn := tls.Client(conn, c.Conf)
 	err = tlsConn.Handshake()
