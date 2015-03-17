@@ -206,6 +206,7 @@ func readErrs(c *Conn) chan error {
 	go func() {
 		p := make([]byte, 6, 6)
 		_, err := c.Read(p)
+		log.Println("[APNS] Error:", err, p)
 		if err != nil {
 			errs <- err
 			return
