@@ -61,7 +61,7 @@ type APS struct {
 	Category         string // requires iOS 8+
 }
 
-func (aps APS) MarshalJSON() ([]byte, error) {
+func (aps APS) serializeForAPNS() map[string]interface{} {
 	data := make(map[string]interface{})
 
 	if !aps.Alert.isZero() {
@@ -83,32 +83,50 @@ func (aps APS) MarshalJSON() ([]byte, error) {
 		data["url-args"] = aps.URLArgs
 	}
 
-	return json.Marshal(data)
+	return data
+}
+
+func (aps APS) MarshalJSONForAPNS() ([]byte, error) {
+
+	return json.Marshal(aps.serializeForAPNS())
 }
 
 type Payload struct {
 	APS APS
 	// MDM for mobile device management
 	MDM          string
-	customValues map[string]interface{}
+	CustomValues map[string]interface{}
 }
 
-func (p *Payload) MarshalJSON() ([]byte, error) {
-	if len(p.MDM) != 0 {
-		p.customValues["mdm"] = p.MDM
-	} else {
-		p.customValues["aps"] = p.APS
+func (p *Payload) serializeForAPNS() map[string]interface{} {
+
+	data := make(map[string]interface{})
+
+	for k,v := range p.CustomValues {
+		data[k] = v
 	}
 
-	return json.Marshal(p.customValues)
+	if len(p.MDM) != 0 {
+		data["mdm"] = p.MDM
+	} else {
+		data["aps"] = p.APS.serializeForAPNS()
+	}
+
+	return data
 }
+
+func (p *Payload) MarshalJSONForAPNS() ([]byte, error) {
+
+	return json.Marshal(p.serializeForAPNS())
+}
+
 
 func (p *Payload) SetCustomValue(key string, value interface{}) error {
 	if key == "aps" {
 		return errors.New("cannot assign a custom APS value in payload")
 	}
 
-	p.customValues[key] = value
+	p.CustomValues[key] = value
 
 	return nil
 }
@@ -127,7 +145,7 @@ func NewNotification() Notification {
 }
 
 func NewPayload() *Payload {
-	return &Payload{customValues: map[string]interface{}{}}
+	return &Payload{CustomValues: map[string]interface{}{}}
 }
 
 func (n Notification) ToBinary() ([]byte, error) {
@@ -138,7 +156,10 @@ func (n Notification) ToBinary() ([]byte, error) {
 		return b, fmt.Errorf("convert token to hex error: %s", err)
 	}
 
-	j, _ := json.Marshal(n.Payload)
+	var j []byte
+	if n.Payload != nil {
+		j, _ = n.Payload.MarshalJSONForAPNS()
+	}
 
 	buf := bytes.NewBuffer(b)
 

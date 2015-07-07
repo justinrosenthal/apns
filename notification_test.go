@@ -93,7 +93,7 @@ var _ = Describe("Notifications", func() {
 					p.APS.Alert.Action = "Launch"
 					p.APS.URLArgs = []string{"hello", "world"}
 
-					b, err := json.Marshal(p)
+					b, err := p.MarshalJSONForAPNS()
 
 					Expect(err).To(BeNil())
 					Expect(b).To(Equal([]byte(`{"aps":{"alert":{"body":"This is a body","title":"Hello World!","action":"Launch"},"url-args":["hello","world"]}}`)))
@@ -107,7 +107,7 @@ var _ = Describe("Notifications", func() {
 			Context("no alert (as with Passbook)", func() {
 				It("should not contain the alert struct", func() {
 					p := apns.NewPayload()
-					b, err := json.Marshal(p)
+					b, err := p.MarshalJSONForAPNS()
 
 					Expect(err).To(BeNil())
 					Expect(b).To(Equal([]byte(`{"aps":{}}`)))
@@ -117,7 +117,7 @@ var _ = Describe("Notifications", func() {
 				It("should not contain the alert struct", func() {
 					p := apns.NewPayload()
 					p.APS.ContentAvailable = 1
-					b, err := json.Marshal(p)
+					b, err := p.MarshalJSONForAPNS()
 
 					Expect(err).To(BeNil())
 					Expect(b).To(Equal([]byte(`{"aps":{"content-available":1}}`)))
@@ -129,7 +129,7 @@ var _ = Describe("Notifications", func() {
 
 					p.APS.Alert.Body = "testing"
 
-					b, err := json.Marshal(p)
+					b, err := p.MarshalJSONForAPNS()
 
 					Expect(err).To(BeNil())
 					Expect(b).To(Equal([]byte(`{"aps":{"alert":{"body":"testing"}}}`)))
@@ -143,7 +143,7 @@ var _ = Describe("Notifications", func() {
 					p.APS.Alert.Body = "testing"
 					p.SetCustomValue("email", "come@me.bro")
 
-					b, err := json.Marshal(p)
+					b, err := p.MarshalJSONForAPNS()
 
 					Expect(err).To(BeNil())
 					Expect(b).To(Equal([]byte(`{"aps":{"alert":{"body":"testing"}},"email":"come@me.bro"}`)))
@@ -156,7 +156,7 @@ var _ = Describe("Notifications", func() {
 
 					p.MDM = "00000000-1111-3333-4444-555555555555"
 
-					b, err := json.Marshal(p)
+					b, err := p.MarshalJSONForAPNS()
 
 					Expect(err).To(BeNil())
 					Expect(b).To(Equal([]byte(`{"mdm":"00000000-1111-3333-4444-555555555555"}`)))
@@ -171,7 +171,7 @@ var _ = Describe("Notifications", func() {
 				zero := 0
 				a := apns.APS{Badge: &zero}
 
-				j, err := json.Marshal(a)
+				j, err := a.MarshalJSONForAPNS()
 
 				Expect(err).To(BeNil())
 				Expect(j).To(Equal([]byte(`{"badge":0}`)))
@@ -181,7 +181,7 @@ var _ = Describe("Notifications", func() {
 			It("should omit the badge field", func() {
 				a := apns.APS{}
 
-				j, err := json.Marshal(a)
+				j, err := a.MarshalJSONForAPNS()
 
 				Expect(err).To(BeNil())
 				Expect(j).To(Equal([]byte(`{}`)))
